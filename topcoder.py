@@ -2,8 +2,14 @@ import sys
 import os
 import re
 
+if len(sys.argv) != 2:
+	print "Specify Solution Name in argv"
+	sys.exit(1)
 
-S = "[a-zA-Z0-9\'\"\[\]{}\\\\,.:]"
+SolutionName = sys.argv[1]
+S = "[a-zA-Z0-9\'\"\[\]{}()\\\\,.:]"
+# Template Directory
+TPD = "/".join(os.path.abspath(__file__).split("/")[:-1]) + "/template"
 
 class State:
 	def __init__(this, state_name, transition=False, action=False):
@@ -49,7 +55,8 @@ class State:
 				if next_state:
 					return next_state
 
-code = open("code.py", "w")
+os.system("cp -f " + TPD + "/header.py " + SolutionName + ".py")
+code = open(SolutionName + ".py", "a")
 
 #### set state 
 start = State("Start")
@@ -158,7 +165,7 @@ def paramAction(this, res):
 			Param_list.append(this.tupStr.replace("{", "(").replace("}",")"))
 			del this.tupStr, this.bnum
 			this.param_idx += 1
-	elif p == "integer" or p == "string" or p == "long integer":
+	elif p == "integer" or p == "string" or p == "long integer" or p == "float":
 		Param_list.append(res.group(1))
 		this.param_idx += 1
 	else:
@@ -168,15 +175,33 @@ def paramAction(this, res):
 def returnValueAction(this, res):
 	# Returns: res.group(1)
 	global Param_list, CaseNo, ClassName
-	print Param_list
-	print res.group(1)
-	print ""
+	correctValue = res.group(1)
 	# gen test code
-	testFile = open("test" + CaseNo + ".py", "w")
-	testFile.write("import sol\n")
-	testFile.write("testvar = " + ClassName + "()\n")
-	testFile.write("testvar." + MethodName + "(" + ",".join(Param_list) + ")\n")
-	testFile.close()
+	os.system("cp -f " + TPD + "/run.py .")
+	os.system("mkdir -p testcases")
+	os.system("cp -f " + TPD + "/testcases.py testcases/tmp")
+	os.system("sed 's/CLASSNAME/"+ClassName+"/;" + \
+				"s/SOLUTIONNAME/"+SolutionName+"/;" + \
+				"s/METHODNAME/"+MethodName+"/;" + \
+				"s/CORRECTVALUE/"+correctValue+"/;" + \
+				"s/PARAMETERLIST/"+(",".join(Param_list)).replace("\'", "\"")+"/;' " + \
+		   		"testcases/tmp > testcases/test" + CaseNo + ".py")
+	os.system("rm -f testcases/tmp")
+	
+#	testFile = open("testcases/test" + CaseNo + ".py", "w")
+#	# for relative import parent dir
+#	testFile.write("import os\n")
+#	testFile.write("import sys\n")
+#	testFile.write("sys.path.append(\"/\".join(os.path.abspath(__file__).split(\"/\")[:-2]))\n")
+#	testFile.write("from " + SolutionName + " import " + ClassName + "\n")
+#	testFile.write("result = " + ClassName + "()." + MethodName + "(" + ",".join(Param_list) + ")\n")
+#	testFile.write("if result == " + correctValue + ":\n")
+#	testFile.write("\tprint \"Yes\"\n")
+#	testFile.write("else:\n")
+#	testFile.write("\tprint \"No\"\n")
+	#testFile.write("\tprint \"your result: \" + result\n")
+	# exit with error code 0
+
 	Param_list = []
 	return examples
 
@@ -185,7 +210,6 @@ cases.enterAction = paramEnterAction
 cases.SetAction("^\s*Returns:\s*(.*"+S+")\s*$", returnValueAction)
 # then catch param
 cases.SetAction("^\s*(.*"+S+")\s*$", paramAction)
-
 
 cur_state = start
 for line in sys.stdin:
@@ -197,4 +221,4 @@ for line in sys.stdin:
 print cur_state.name
 print Param_type_list
 code.close()
-# tuple (string), tuple (integer), long integer, integer, string
+# tuple (string), tuple (integer), long integer, integer, float, string
