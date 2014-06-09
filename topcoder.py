@@ -7,6 +7,8 @@ if len(sys.argv) != 2:
 	sys.exit(1)
 
 SolutionName = sys.argv[1]
+os.system("vim -c \"startinsert\" tmp")
+prob_file = open("tmp", "r")
 S = "[a-zA-Z0-9\'\"\[\]{}()\\\\,.:]"
 # Template Directory
 TPD = "/".join(os.path.abspath(__file__).split("/")[:-1]) + "/template"
@@ -212,7 +214,7 @@ cases.SetAction("^\s*Returns:\s*(.*"+S+")\s*$", returnValueAction)
 cases.SetAction("^\s*(.*"+S+")\s*$", paramAction)
 
 cur_state = start
-for line in sys.stdin:
+for line in prob_file:
 	x = cur_state.Check(line)
 	if x:
 		cur_state.End()
@@ -220,5 +222,7 @@ for line in sys.stdin:
 		cur_state.Enter()
 print cur_state.name
 print Param_type_list
+prob_file.close()
+os.system("rm tmp")
 code.close()
 # tuple (string), tuple (integer), long integer, integer, float, string
