@@ -160,7 +160,7 @@ def paramAction(this, res):
 			# first enter tuple state
 			this.tupStr = ""
 			this.bnum = 0
-		this.tupStr += res.group(1)
+		this.tupStr += res.group(1).replace("}", ",}")
 		this.bnum += res.group(1).count("{") - res.group(1).count("}")
 		if this.bnum == 0:
 			# end of tuple state
